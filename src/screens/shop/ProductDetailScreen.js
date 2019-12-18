@@ -18,7 +18,7 @@ const ProductDetailScreen = props => {
     return (
         <ScrollView>
             <Image style={styles.image} source={{ uri: selectProduct.imageUrl }} />
-            <View style={styles.action}>
+            <View style={styles.actions}>
                 <Button
                     onPress={() => {
                         dispatch(cartActions.addToCard(selectProduct));
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 300
     },
-    action: {
+    actions: {
         alignItems: 'center',
         marginVertical: 10
     },
