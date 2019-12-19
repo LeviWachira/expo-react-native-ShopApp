@@ -7,11 +7,13 @@ import * as Font from 'expo-font';
 
 import productsReducer from './src/store/reducers/products';
 import cartReducer from './src/store/reducers/cart';
+import OrdersReducer from './src/store/reducers/orders';
 import ShopNavigators from './src/navigation/ShopNavigators';
 
 const rootReducer = combineReducers({
-  products: productsReducer ,
-  cart : cartReducer
+  products: productsReducer,
+  cart: cartReducer,
+  orders: OrdersReducer
 });
 
 
