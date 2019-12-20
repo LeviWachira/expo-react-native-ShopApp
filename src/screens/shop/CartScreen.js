@@ -33,7 +33,8 @@ const CartScreen = props => {
             <View style={styles.summary}>
                 <Text style={styles.summaryText}>
                     Total:{' '}
-                    <Text style={styles.amount}>${parseFloat(cartTotalAmount.toFixed(2))}</Text>
+                    <Text style={styles.amount}>${Math.round(cartTotalAmount.toFixed(2) * 100) / 100}</Text>
+                                         {/* or use {parseFloat(cartTotalAmount.toFixed(2))}  */}
                 </Text>
                 <Button
                     color={Colors.accent}
