@@ -1,38 +1,119 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, Platform } from 'react-native';
+import React, { useCallback, useEffect, useReducer } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ScrollView,
+    TextInput,
+    Platform,
+    Alert
+} from 'react-native';
 import { HeaderButtons, Item } from 'react-navigation-header-buttons';
 import { useSelector, useDispatch } from 'react-redux'
 
 import CustomHeaderButton from '../../components/UI/CustomHeaderButton';
 import * as productsActions from '../../store/actions/products';
 
+
+// main handler formReducer 
+const FORM_INPUT_UPDATE = 'FORM_INPUT_UPDATE';
+
+const formReducer = (state, action) => {
+    if (action.type === FORM_INPUT_UPDATE) {
+        const updatedValues = {
+            ...state.inputValues,
+            [action.input]: action.value
+        };
+
+        const updateValidities = {
+            ...state.inputValidities,
+            [action.input]: action.isValid
+        };
+
+        let updateFormIsValid = true;
+        for (const key in updateValidities) {
+            updateFormIsValid = updateFormIsValid && updateValidities[key];
+        }
+        return {
+            formIsValid: updateFormIsValid,
+            inputValidities: updateValidities,
+            inputValues: updatedValues,
+        };
+    };
+    return state;
+};
+
+// Main Functional Component of EditProductScreen 
 const EditProductScreen = props => {
 
     const prodId = props.navigation.getParam('productId');
-    const editedProduct = useSelector(state => state.products.userProduct.find(
-        prod => prod.id === prodId)
+    const editedProduct = useSelector(state =>
+        state.products.userProduct.find(prod => prod.id === prodId)
     );
     const dispatch = useDispatch();
 
-    const [title, setTitle] = useState(editedProduct ? editedProduct.title : '');
-    const [imageUrl, setImageUrl] = useState(editedProduct ? editedProduct.imageUrl : '');
-    const [price, setPrice] = useState('');
-    const [description, setDescription] = useState(editedProduct ? editedProduct.description : '');
+    // initial State of formReducer
+    const [formState, dispatchFormState] = useReducer(formReducer, {
+        inputValues: {
+            title: editedProduct ? editedProduct.title : '',
+            imageUrl: editedProduct ? editedProduct.imageUrl : '',
+            description: editedProduct ? editedProduct.description : '',
+            price: ''
+        },
+        inputValidities: {
+            title: editedProduct ? true : false,
+            imageUrl: editedProduct ? true : false,
+            description: editedProduct ? true : false,
+            price: editedProduct ? true : false
+        },
+        formIsValid: editedProduct ? true : false
+    });
 
-
+    // This Fn useCallback handler submit
     const submitHandler = useCallback(() => {
+        if (!formState.formIsValid) {
+            Alert.alert('Wrong input!', 'Please check the errors in the form.', [
+                { text: 'Okay' }
+            ]);
+            return;
+        }
         if (editedProduct) {
-            dispatch(productsActions.updateProduct(prodId, title, description, imageUrl));
+            dispatch(productsActions.updateProduct(
+                prodId,
+                formState.inputValues.title,
+                formState.inputValues.description,
+                formState.inputValues.imageUrl
+            ));
         } else {
-            dispatch(productsActions.createProduct(title, description, imageUrl, +price));
+            dispatch(productsActions.createProduct(
+                formState.inputValues.title,
+                formState.inputValues.description,
+                formState.inputValues.imageUrl,
+                +formState.inputValues.price
+            ));
         }
         props.navigation.goBack();
-        
-    }, [dispatch, prodId, title, description, imageUrl, price]);
+    }, [dispatch, prodId, formState]);
 
     useEffect(() => {
         props.navigation.setParams({ submit: submitHandler })
     }, [submitHandler]);
+
+    // This Fn handler Textinput and Action creator
+    const textChangeHandler = (inputIdentifier, text) => {
+        let isValid = false;
+
+        if (text.trim().length > 0) {
+            isValid = true;
+        }
+
+        dispatchFormState({
+            type: FORM_INPUT_UPDATE,
+            value: text,
+            isValid: isValid,
+            input: inputIdentifier
+        });
+    };
 
     return (
         <ScrollView>
@@ -41,33 +122,43 @@ const EditProductScreen = props => {
                     <Text style={styles.label}>Title</Text>
                     <TextInput
                         style={styles.input}
-                        value={title}
-                        onChangeText={text => setTitle(text)}
+                        value={formState.inputValues.title}
+                        onChangeText={textChangeHandler.bind(this, 'title')}
+                        autoCapitalize="sentences"
+                        keyboardType='default'
+                        autoCorrect
+                        returnKeyType='next'
+                        onEndEditing={() => console.log('onEndEditing')}
+                        onSubmitEditing={() => console.log('onSubmitEditing')}
                     />
+                    {!formState.inputValidities.title && <Text style={styles.alertText}>Please enter a valid title!</Text>}
                 </View>
                 <View style={styles.formControl}>
                     <Text style={styles.label}>Image URL</Text>
                     <TextInput
                         style={styles.input}
-                        value={imageUrl}
-                        onChangeText={text => setImageUrl(text)}
+                        value={formState.inputValues.imageUrl}
+                        onChangeText={textChangeHandler.bind(this, 'imageUrl')}
                     />
                 </View>
                 {/* will render when your on Add Mode access Not render for Edit Mode*/}
-                {editedProduct ? null : <View style={styles.formControl}>
-                    <Text style={styles.label}>Price</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={price}
-                        onChangeText={text => setPrice(text)}
-                    />
-                </View>}
+                {editedProduct ? null : (
+                    <View style={styles.formControl}>
+                        <Text style={styles.label}>Price</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={formState.inputValues.price}
+                            onChangeText={textChangeHandler.bind(this, 'price')}
+                            keyboardType='decimal-pad'
+                        />
+                    </View>
+                )}
                 <View style={styles.formControl}>
                     <Text style={styles.label}>Description</Text>
                     <TextInput
                         style={styles.input}
-                        value={description}
-                        onChangeText={text => setDescription(text)}
+                        value={formState.inputValues.description}
+                        onChangeText={textChangeHandler.bind(this, 'description')}
                     />
                 </View>
             </View>
@@ -104,7 +195,9 @@ const styles = StyleSheet.create({
     },
     label: {
         fontWeight: 'bold',
-        marginVertical: 8
+        marginVertical: 8,
+        fontSize : 16
+        
     },
     input: {
         marginVertical: 2,
@@ -112,6 +205,9 @@ const styles = StyleSheet.create({
         borderColor: '#ccc',
         borderBottomWidth: 1
     },
+    alertText: {
+        color: 'red'
+    }
 })
 
-export default EditProductScreen
+export default EditProductScreen;
