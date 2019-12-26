@@ -90,7 +90,7 @@ export const createProduct = (title, description, imageUrl, price) => {
 export const updateProduct = (id, title, description, imageUrl) => {
   return async dispatch => {
     await fetch(
-      `https://rn-shopaap-guide.firebaseio.com/products/${id}.json`,
+      `https://rn-shopaap-guide.firebaseio.com/products/LwtjMHata1uJYlTOvEE.json`,
       {
         method: 'PATCH',
         headers: {
