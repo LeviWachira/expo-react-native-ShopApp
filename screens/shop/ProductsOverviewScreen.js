@@ -91,7 +91,6 @@ const ProductsOverviewScreen = props => {
 
   return (
     <FlatList
-      // refresh for reload new data 
       onRefresh={loadProducts}
       refreshing={isRefreshing}
       data={products}

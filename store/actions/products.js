@@ -6,8 +6,10 @@ export const UPDATE_PRODUCT = 'UPDATE_PRODUCT';
 export const SET_PRODUCTS = 'SET_PRODUCTS';
 
 export const fetchProducts = () => {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     // any async code you want!
+    const userId = getState().auth.userId;
+
     try {
       const response = await fetch(
         'https://rn-shopaap-guide.firebaseio.com/products.json'
@@ -19,12 +21,11 @@ export const fetchProducts = () => {
 
       const resData = await response.json();
       const loadedProducts = [];
-
       for (const key in resData) {
         loadedProducts.push(
           new Product(
             key,
-            'u1',
+            resData[key].ownerId,
             resData[key].title,
             resData[key].imageUrl,
             resData[key].description,
@@ -33,7 +34,11 @@ export const fetchProducts = () => {
         );
       }
 
-      dispatch({ type: SET_PRODUCTS, products: loadedProducts });
+      dispatch({
+        type: SET_PRODUCTS,
+        products: loadedProducts,
+        userProducts: loadedProducts.filter(prod => prod.ownerId === userId)
+      });
     } catch (err) {
       // send to custom analytics server
       throw err;
@@ -42,22 +47,30 @@ export const fetchProducts = () => {
 };
 
 export const deleteProduct = productId => {
-  return async dispatch => {
-    await fetch(
-      `https://rn-shopaap-guide.firebaseio.com/products/${productId}.json`,
+  return async (dispatch, getState) => {
+
+    const response = await fetch(
+      `https://rn-shopaap-guide.firebaseio.com/products/${productId}.json?auth=${token}`,
       {
         method: 'DELETE'
       }
     );
+
+    if (!response.ok) {
+      throw new Error('Something went wrong!');
+    }
     dispatch({ type: DELETE_PRODUCT, pid: productId });
   };
 };
 
 export const createProduct = (title, description, imageUrl, price) => {
-  return async dispatch => {
-    // any async code you want!
+  return async (dispatch, getState) => {
+
+    console.log(getState());
+    const token = getState().auth.token;
+    const userId = getState().auth.userId;
     const response = await fetch(
-      'https://rn-shopaap-guide.firebaseio.com/products.json',
+      `https://rn-shopaap-guide.firebaseio.com/products.json?auth=${token}`,
       {
         method: 'POST',
         headers: {
@@ -67,7 +80,8 @@ export const createProduct = (title, description, imageUrl, price) => {
           title,
           description,
           imageUrl,
-          price
+          price,
+          ownerId: userId
         })
       }
     );
@@ -81,16 +95,19 @@ export const createProduct = (title, description, imageUrl, price) => {
         title,
         description,
         imageUrl,
-        price
+        price,
+        ownerId: userId
       }
     });
   };
 };
 
 export const updateProduct = (id, title, description, imageUrl) => {
-  return async dispatch => {
-    await fetch(
-      `https://rn-shopaap-guide.firebaseio.com/products/LwtjMHata1uJYlTOvEE.json`,
+  return async (dispatch, getState) => {
+    console.log(getState());
+    const token = getState().auth.token;
+    const response = await fetch(
+      `https://rn-shopaap-guide.firebaseio.com/products/${id}.json?auth=${token}`,
       {
         method: 'PATCH',
         headers: {
@@ -103,6 +120,10 @@ export const updateProduct = (id, title, description, imageUrl) => {
         })
       }
     );
+
+    if (!response.ok) {
+      throw new Error('Something went wrong!');
+    }
 
     dispatch({
       type: UPDATE_PRODUCT,

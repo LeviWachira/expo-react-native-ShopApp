@@ -1,19 +1,20 @@
-export const ADD_ORDER = 'ADD_ORDER';
-export const SET_ORDER = 'SET_ORDER';
-
 import Order from '../../models/order';
 
-export const fetchOrders = () => {
-  return async dispatch => {
+export const ADD_ORDER = 'ADD_ORDER';
+export const SET_ORDERS = 'SET_ORDERS';
 
+export const fetchOrders = () => {
+  return async (dispatch , getState) => {
+    const userId = getState().auth.userId ;
     try {
       const response = await fetch(
-        'https://rn-shopaap-guide.firebaseio.com/orders/u1.json'
+        `https://rn-shopaap-guide.firebaseio.com/orders/${userId}.json`
       );
 
       if (!response.ok) {
         throw new Error('Something went wrong!');
       }
+
       const resData = await response.json();
       const loadedOrders = [];
 
@@ -27,7 +28,7 @@ export const fetchOrders = () => {
           )
         );
       }
-      dispatch({ type: SET_ORDER, orders: loadedOrders })
+      dispatch({ type: SET_ORDERS, orders: loadedOrders });
     } catch (err) {
       throw err;
     }
@@ -35,10 +36,14 @@ export const fetchOrders = () => {
 };
 
 export const addOrder = (cartItems, totalAmount) => {
-  return async dispatch => {
+  return async (dispatch, getState) => {
+    console.log(getState());
+
+    const token = getState().auth.token;
+    const userId = getState().auth.userId;
     const date = new Date();
     const response = await fetch(
-      'https://rn-shopaap-guide.firebaseio.com/orders/u1.json',
+      `https://rn-shopaap-guide.firebaseio.com/orders/${userId}.json?auth=${token}`,
       {
         method: 'POST',
         headers: {
@@ -47,14 +52,14 @@ export const addOrder = (cartItems, totalAmount) => {
         body: JSON.stringify({
           cartItems,
           totalAmount,
-          date: date.toISOString(),
+          date: date.toISOString()
         })
       }
     );
 
     if (!response.ok) {
-      throw new Error('Someting went wrong!')
-    };
+      throw new Error('Something went wrong!');
+    }
 
     const resData = await response.json();
 
@@ -67,6 +72,5 @@ export const addOrder = (cartItems, totalAmount) => {
         date: date
       }
     });
-
-  }
+  };
 };
