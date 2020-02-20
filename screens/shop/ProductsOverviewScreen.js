@@ -24,6 +24,7 @@ const ProductsOverviewScreen = props => {
   const products = useSelector(state => state.products.availableProducts);
   const dispatch = useDispatch();
 
+
   const loadProducts = useCallback(async () => {
     setError(null);
     setIsRefreshing(true);
@@ -35,16 +36,15 @@ const ProductsOverviewScreen = props => {
     setIsRefreshing(false);
   }, [dispatch, setIsLoading, setError]);
 
+
   useEffect(() => {
-    const willFocusSub = props.navigation.addListener(
-      'willFocus',
-      loadProducts
-    );
+    const unsubscribe = props.navigation.addListener('focus', loadProducts);
 
     return () => {
-      willFocusSub.remove();
+      unsubscribe();
     };
   }, [loadProducts]);
+
 
   useEffect(() => {
     setIsLoading(true);
@@ -53,12 +53,14 @@ const ProductsOverviewScreen = props => {
     });
   }, [dispatch, loadProducts]);
 
+
   const selectItemHandler = (id, title) => {
     props.navigation.navigate('ProductDetail', {
       productId: id,
       productTitle: title
     });
   };
+
 
   if (error) {
     return (
@@ -73,6 +75,7 @@ const ProductsOverviewScreen = props => {
     );
   }
 
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -80,6 +83,7 @@ const ProductsOverviewScreen = props => {
       </View>
     );
   }
+
 
   if (!isLoading && products.length === 0) {
     return (
@@ -124,10 +128,10 @@ const ProductsOverviewScreen = props => {
   );
 };
 
-ProductsOverviewScreen.navigationOptions = navData => {
+export const screenOptions = navData => {
   return {
     headerTitle: 'All Products',
-    headerLeft: (
+    headerLeft: () => (
       <HeaderButtons HeaderButtonComponent={HeaderButton}>
         <Item
           title="Menu"
@@ -138,7 +142,7 @@ ProductsOverviewScreen.navigationOptions = navData => {
         />
       </HeaderButtons>
     ),
-    headerRight: (
+    headerRight: () => (
       <HeaderButtons HeaderButtonComponent={HeaderButton}>
         <Item
           title="Cart"

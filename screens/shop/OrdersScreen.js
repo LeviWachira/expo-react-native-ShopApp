@@ -25,7 +25,7 @@ const OrdersScreen = props => {
     setIsLoading(true);
     dispatch(ordersActions.fetchOrders()).then(() => {
       setIsLoading(false);
-    });
+    })
   }, [dispatch]);
 
   if (isLoading) {
@@ -60,10 +60,10 @@ const OrdersScreen = props => {
   );
 };
 
-OrdersScreen.navigationOptions = navData => {
+export const screenOptions = navData => {
   return {
     headerTitle: 'Your Orders',
-    headerLeft: (
+    headerLeft: () => (
       <HeaderButtons HeaderButtonComponent={HeaderButton}>
         <Item
           title="Menu"
